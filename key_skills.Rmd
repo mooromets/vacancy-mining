@@ -1,0 +1,82 @@
+---
+title: "Key skills for DS role"
+author: "Sergey Sambor"
+date: "August 29, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libs, echo = FALSE}
+library("RWeka")
+library("tm")
+library("SnowballC")
+```
+Read jobs data
+```{r read data}
+conn <- file("./job/data.frame/27jobs.txt", open="r")
+jobsData <- readLines(conn)
+close(conn)
+
+jobs <- VCorpus(VectorSource(jobsData))
+jobs <- tm_map(jobs, content_transformer(gsub), pattern = "[[:punct:]]", 
+               replacement = " ")
+jobs <- tm_map(jobs, stripWhitespace)
+#jobs <- tm_map(jobs, removePunctuation) - is done above
+#jobs <- tm_map(jobs, removeNumbers)
+jobs <- tm_map(jobs, content_transformer(tolower))
+#jobs <- tm_map(jobs, stemDocument)
+customStopWords <- c("and", "very", "for")
+jobs <- tm_map(jobs, removeWords, customStopWords)
+```
+Find most frequent single-word terms
+```{r single-word}
+tdm1 <- TermDocumentMatrix(jobs, list(stopwords = TRUE, wordLengths=c(1,Inf)
+                                      ))
+findFreqTerms(tdm1, 5)
+```
+It can be seen that most words are part of some multiple-word term, but they are meaningless as single-word term.
+Let's hide them
+```{r}
+meanless <- c("analysis", "analytics", "big", "data", "development" , "framework"
+              , "good", "language", "learn",  "learning", "machine", "mining"
+              , "model" , "process", "programming",  "software", "system", "tool"
+              , "application", "ibm", "integration", "mathematical", "visualization"
+              , "business", "fluent", "high",  "intelligence", "level", "modelling"
+              , "management", "multivariable",  "network", "neural", "continuous"
+              , "deep", "distributed", "exploratory" , "feature", "vision"
+              , "function", "google", "microsoft", "predictive", "procedures"
+              , "science", "sensor", "technology", "unstructured", "write"
+              , "speak", "large", "applications", "excellent", "frameworks"
+              , "languages", "models", "networks", "processing", "systems", "tools"
+              , "statistical", "statistics", "algorithms", "automated", "embedded"
+              , "image", "modeling" , "scene", "technologies", "computer"
+              , "multivariate")
+(meanful <- setdiff(findFreqTerms(tdm1, 2), meanless))
+```
+Now let's have a look at the most frequent two-word terms
+```{r}
+nGramTok <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
+tdm2 <- 
+  TermDocumentMatrix(jobs, list(tokenize = nGramTok, stopwords = TRUE, wordLengths=c(1,Inf)
+                                ))
+(terms2 <- findFreqTerms(tdm2, 2))
+```
+"english write", "german good" "languag python"... We remove terms, that contain any word from meaningful single-word-terms
+```{r}
+# performs logical OR operation on all columns
+frameOr <- function(x) {
+  res <- rep(FALSE, dim(x)[1])
+  for (i in 1:dim(x)[2])  res <- res | x[,i]
+  res
+}
+
+# vector meanful contains terms like "r", "ms" or "rest", that are part of normal
+# english words. We skip too short terms
+longTerms <- meanful[nchar(meanful) > 4]
+
+index <- frameOr(as.data.frame(lapply(longTerms, grepl, x=terms2)))
+terms2[!index]
+```
