@@ -31,15 +31,16 @@ jobs <- tm_map(jobs, content_transformer(gsub), pattern = "C ?[#]{1}",
 jobs <- tm_map(jobs, content_transformer(gsub), pattern = "[[:punct:]]", 
                replacement = " ")
 jobs <- tm_map(jobs, content_transformer(gsub), pattern = " R ", 
-               replacement = "rlang")
+               replacement = " rlang ")
 jobs <- tm_map(jobs, content_transformer(gsub), pattern = " C ", 
-               replacement = "clang")
+               replacement = " clang ")
 jobs <- tm_map(jobs, stripWhitespace)
 #jobs <- tm_map(jobs, removePunctuation) - is done above
 #jobs <- tm_map(jobs, removeNumbers)
 jobs <- tm_map(jobs, content_transformer(tolower))
 #jobs <- tm_map(jobs, stemDocument)
-customStopWords <- c("and", "very", "for", "good", "etc", "eg", "in", "of", "or")
+customStopWords <- c("and", "very", "for", "good", "etc", "eg", "in", "of"
+                     , "or", "such", "as")
 jobs <- tm_map(jobs, removeWords, customStopWords)
 ```
 Find most frequent single-word terms
@@ -64,8 +65,20 @@ meanless <- c("analysis", "analytics", "big", "data", "development" , "framework
               , "languages", "models", "networks", "processing", "systems", "tools"
               , "statistical", "statistics", "algorithms", "automated", "embedded"
               , "image", "modeling" , "scene", "technologies", "computer"
-              , "multivariate")
-(meanful <- setdiff(findFreqTerms(tdm1, 2), meanless))
+              , "multivariate", "methods", "amounts", "engineering", "series"
+              , "techniques", "time", "analytical", "especially", "structures"
+              , "written", "spoken", "search", "project", "preferably", "knowledge"
+              , "natural", "granular", "trees", "sets")
+
+
+
+meanful <- c()
+for (i in seq(8, 2, by = -2)) {
+  print (sprintf(" -- %i+ occurancies ----- ", i))
+  thisMatch <- setdiff(findFreqTerms(tdm1, i), meanless)
+  print(thisMatch <- setdiff(thisMatch, meanful))
+  meanful <- c(meanful, thisMatch)
+}
 ```
 Now let's have a look at the most frequent two-word terms
 ```{r}
@@ -73,7 +86,8 @@ nGramTok <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
 tdm2 <- 
   TermDocumentMatrix(jobs, list(tokenize = nGramTok, stopwords = TRUE, wordLengths=c(1,Inf)
                                 ))
-(terms2 <- findFreqTerms(tdm2, 2))
+terms2 <- findFreqTerms(tdm2, 6)
+head(terms2, 12)
 ```
 "english write", "german good" "languag python"... We remove terms, that contain any word from meaningful single-word-terms
 ```{r}
@@ -86,8 +100,14 @@ frameOr <- function(x) {
 
 # vector meanful contains terms like "ms" that are part of normal english words.
 # We skip too short terms
-longTerms <- meanful[nchar(meanful) > 4]
+longTerms <- meanful[nchar(meanful) > 3]
 
-index <- frameOr(as.data.frame(lapply(longTerms, grepl, x=terms2)))
-terms2[!index]
+meanful2 <- c()
+for (i in seq(10, 2, by = -2)) {
+  print (sprintf(" -- %i+ occurancies ----- ", i))
+  terms2 <- findFreqTerms(tdm2, i)
+  index <- frameOr(as.data.frame(lapply(longTerms, grepl, x=terms2)))
+  print(setdiff(terms2[!index], meanful2))
+  meanful2 <- c(meanful2, terms2[!index])
+}
 ```
