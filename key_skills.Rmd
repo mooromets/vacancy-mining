@@ -21,14 +21,25 @@ jobsData <- readLines(conn)
 close(conn)
 
 jobs <- VCorpus(VectorSource(jobsData))
+# remove shortenings before stripping off punctuation
+jobs <- tm_map(jobs, content_transformer(gsub), pattern = "(e\\.g\\.)|(i\\.e\\.)", 
+               replacement = "")
+jobs <- tm_map(jobs, content_transformer(gsub), pattern = "C ?[+]{2}", 
+               replacement = "cplus")
+jobs <- tm_map(jobs, content_transformer(gsub), pattern = "C ?[#]{1}", 
+               replacement = "csharp")
 jobs <- tm_map(jobs, content_transformer(gsub), pattern = "[[:punct:]]", 
                replacement = " ")
+jobs <- tm_map(jobs, content_transformer(gsub), pattern = " R ", 
+               replacement = "rlang")
+jobs <- tm_map(jobs, content_transformer(gsub), pattern = " C ", 
+               replacement = "clang")
 jobs <- tm_map(jobs, stripWhitespace)
 #jobs <- tm_map(jobs, removePunctuation) - is done above
 #jobs <- tm_map(jobs, removeNumbers)
 jobs <- tm_map(jobs, content_transformer(tolower))
 #jobs <- tm_map(jobs, stemDocument)
-customStopWords <- c("and", "very", "for")
+customStopWords <- c("and", "very", "for", "good", "etc", "eg", "in", "of", "or")
 jobs <- tm_map(jobs, removeWords, customStopWords)
 ```
 Find most frequent single-word terms
@@ -73,8 +84,8 @@ frameOr <- function(x) {
   res
 }
 
-# vector meanful contains terms like "r", "ms" or "rest", that are part of normal
-# english words. We skip too short terms
+# vector meanful contains terms like "ms" that are part of normal english words.
+# We skip too short terms
 longTerms <- meanful[nchar(meanful) > 4]
 
 index <- frameOr(as.data.frame(lapply(longTerms, grepl, x=terms2)))
