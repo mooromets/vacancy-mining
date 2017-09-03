@@ -24,7 +24,7 @@ requirements_transformer <- function (jobs) {
   jobs <- tm_map(jobs, content_transformer(tolower))
   #jobs <- tm_map(jobs, stemDocument)
   # remove words that don't have much sence 
-  customStopWords <- c("and", "very", "for", "good", "etc", "eg", "in", "of"
+  customStopWords <- c("and", "very", "for", "etc", "eg", "in", "of"
                        , "or", "such", "as")
   jobs <- tm_map(jobs, removeWords, customStopWords)
   jobs

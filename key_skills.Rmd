@@ -15,6 +15,7 @@ library("tm")
 library("SnowballC")
 
 source("./requirements_transformer.R")
+source("./sensible_terms.R")
 ```
 Read jobs data
 ```{r read data}
@@ -33,34 +34,15 @@ tdm1 <- TermDocumentMatrix(jobs, list(stopwords = TRUE, wordLengths=c(1,Inf)
 head(findFreqTerms(tdm1, 5), 20)
 ```
 It can be seen that most words are part of some multiple-word term, but they are meaningless as a single-word term.
-Let's hide them
+Let's hide them.  
+We arrange terms in the order of high occurancy
 ```{r}
-meanless <- c("analysis", "analytics", "big", "data", "development" , "framework"
-              , "good", "language", "learn",  "learning", "machine", "mining"
-              , "model" , "process", "programming",  "software", "system", "tool"
-              , "application", "ibm", "integration", "mathematical", "visualization"
-              , "business", "fluent", "high",  "intelligence", "level", "modelling"
-              , "management", "multivariable",  "network", "neural", "continuous"
-              , "deep", "distributed", "exploratory" , "feature", "vision"
-              , "function", "google", "microsoft", "predictive", "procedures"
-              , "science", "sensor", "technology", "unstructured", "write"
-              , "speak", "large", "applications", "excellent", "frameworks"
-              , "languages", "models", "networks", "processing", "systems", "tools"
-              , "statistical", "statistics", "algorithms", "automated", "embedded"
-              , "image", "modeling" , "scene", "technologies", "computer"
-              , "multivariate", "methods", "amounts", "engineering", "series"
-              , "techniques", "time", "analytical", "especially", "structures"
-              , "written", "spoken", "search", "project", "preferably", "knowledge"
-              , "natural", "granular", "trees", "sets")
-
-
-
-meanful <- c()
+sensible <- c()
 for (i in seq(8, 2, by = -2)) {
   print (sprintf(" -- %i+ occurancies ----- ", i))
-  thisMatch <- setdiff(findFreqTerms(tdm1, i), meanless)
-  print(thisMatch <- setdiff(thisMatch, meanful))
-  meanful <- c(meanful, thisMatch)
+  thisMatch <- sensible_terms(findFreqTerms(tdm1, i))
+  print(thisMatch <- setdiff(thisMatch, sensible))
+  sensible <- c(sensible, thisMatch)
 }
 ```
 Now let's have a look at the most frequent two-word terms
@@ -83,14 +65,14 @@ frameOr <- function(x) {
 
 # vector meanful contains terms like "ms" that are part of normal english words.
 # We skip too short terms
-longTerms <- meanful[nchar(meanful) > 3]
+longTerms <- sensible[nchar(sensible) > 3]
 
-meanful2 <- c()
+sensible2 <- c()
 for (i in seq(10, 2, by = -2)) {
   print (sprintf(" -- %i+ occurancies ----- ", i))
   terms2 <- findFreqTerms(tdm2, i)
   index <- frameOr(as.data.frame(lapply(longTerms, grepl, x=terms2)))
-  print(setdiff(terms2[!index], meanful2))
-  meanful2 <- c(meanful2, terms2[!index])
+  print(setdiff(terms2[!index], sensible2))
+  meanful2 <- c(sensible2, terms2[!index])
 }
 ```
