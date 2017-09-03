@@ -13,6 +13,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library("RWeka")
 library("tm")
 library("SnowballC")
+
+source("./requirements_transformer.R")
 ```
 Read jobs data
 ```{r read data}
@@ -22,34 +24,15 @@ close(conn)
 
 jobs <- VCorpus(VectorSource(jobsData))
 # remove shortenings before stripping off punctuation
-jobs <- tm_map(jobs, content_transformer(gsub), pattern = "(e\\.g\\.)|(i\\.e\\.)", 
-               replacement = "")
-jobs <- tm_map(jobs, content_transformer(gsub), pattern = "C ?[+]{2}", 
-               replacement = "cplus")
-jobs <- tm_map(jobs, content_transformer(gsub), pattern = "C ?[#]{1}", 
-               replacement = "csharp")
-jobs <- tm_map(jobs, content_transformer(gsub), pattern = "[[:punct:]]", 
-               replacement = " ")
-jobs <- tm_map(jobs, content_transformer(gsub), pattern = " R ", 
-               replacement = " rlang ")
-jobs <- tm_map(jobs, content_transformer(gsub), pattern = " C ", 
-               replacement = " clang ")
-jobs <- tm_map(jobs, stripWhitespace)
-#jobs <- tm_map(jobs, removePunctuation) - is done above
-#jobs <- tm_map(jobs, removeNumbers)
-jobs <- tm_map(jobs, content_transformer(tolower))
-#jobs <- tm_map(jobs, stemDocument)
-customStopWords <- c("and", "very", "for", "good", "etc", "eg", "in", "of"
-                     , "or", "such", "as")
-jobs <- tm_map(jobs, removeWords, customStopWords)
+jobs <- requirements_transformer(jobs)
 ```
 Find most frequent single-word terms
 ```{r single-word}
 tdm1 <- TermDocumentMatrix(jobs, list(stopwords = TRUE, wordLengths=c(1,Inf)
                                       ))
-findFreqTerms(tdm1, 5)
+head(findFreqTerms(tdm1, 5), 20)
 ```
-It can be seen that most words are part of some multiple-word term, but they are meaningless as single-word term.
+It can be seen that most words are part of some multiple-word term, but they are meaningless as a single-word term.
 Let's hide them
 ```{r}
 meanless <- c("analysis", "analytics", "big", "data", "development" , "framework"
