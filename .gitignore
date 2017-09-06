@@ -1,0 +1,6 @@
+.Rhistory
+dictionary/
+job/
+*.html
+stop/
+.gitignore~
