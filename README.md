@@ -2,12 +2,12 @@
 Text-mining are applied to Data Science vacancies (Germany, BaWu, english) and the key required skills are extracted. 
 
 ## Run
-To run the project, run key_skills.Rmd
+To run the project, "knit" [key_skills.Rmd](key_skills.Rmd)
 
 ## Buit with
-RWeka - for tokenization
-tm - main text maining functions
-SnowballC - word stemming 
+RWeka - for tokenization  
+tm - main text maining functions  
+SnowballC - word stemming  
 
 ## Authors
 
